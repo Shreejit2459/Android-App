@@ -6,22 +6,20 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val batteryTempText: TextView = findViewById(R.id.batteryTempText)
+        // Find the TextView in your layout
+        val batteryTempText = findViewById<TextView>(R.id.batteryTempText)
 
+        // Get battery temperature
         val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
         val tenths = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_TEMPERATURE)
-        val celsius = tenths / 10.0
 
-        batteryTempText.text = "Battery Temp: $celsius °C"
-    }
-}
-
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    private fun getBatteryTemperature(bm: BatteryManager): Int {
-        return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_TEMPERATURE)
+        // Show temperature in °C
+        val tempC = tenths / 10.0
+        batteryTempText.text = "Battery Temp: $tempC °C"
     }
 }
