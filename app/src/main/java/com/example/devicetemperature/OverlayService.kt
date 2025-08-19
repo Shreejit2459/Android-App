@@ -1,65 +1,58 @@
 package com.example.devicetemperature
 
 import android.app.Service
-import android.content.Context
 import android.content.Intent
+import android.graphics.PixelFormat
 import android.os.BatteryManager
-import android.os.Build
 import android.os.IBinder
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 
 class OverlayService : Service() {
-
+    private var windowManager: WindowManager? = null
     private var overlayView: TextView? = null
-    private lateinit var windowManager: WindowManager
 
     override fun onCreate() {
         super.onCreate()
-        val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        overlayView = inflater.inflate(R.layout.overlay_layout, null) as TextView
 
-        windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+
+        overlayView = TextView(this).apply {
+            textSize = 16f
+            setPadding(20, 20, 20, 20)
+            setBackgroundColor(0x88FFFFFF.toInt())
+        }
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            android.graphics.PixelFormat.TRANSLUCENT
-        )
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = 50
+            y = 50
+        }
 
-        windowManager.addView(overlayView, params)
+        windowManager?.addView(overlayView, params)
 
         updateTemperature()
     }
 
     private fun updateTemperature() {
-        val bm = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val temp = getBatteryTemperature(bm)
-            overlayView?.text = "Temp: ${temp / 10.0} °C"
-        } else {
-            overlayView?.text = "Not supported"
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    private fun getBatteryTemperature(bm: BatteryManager): Int {
-        return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_TEMPERATURE)
+        val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
+        val tenths = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_TEMPERATURE)
+        val celsius = tenths / 10.0
+        overlayView?.text = "Battery Temp: $celsius °C"
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (overlayView != null) {
-            windowManager.removeView(overlayView)
-            overlayView = null
-        }
+        if (overlayView != null) windowManager?.removeView(overlayView)
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+    override fun onBind(intent: Intent?): IBinder? = null
 }
